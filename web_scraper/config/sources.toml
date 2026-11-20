@@ -1,0 +1,86 @@
+# Sources without a tested collector or reviewed access path remain disabled.
+
+[[sources]]
+key = "hhs_ocr"
+name = "U.S. HHS OCR Breach Portal"
+landing_url = "https://ocrportal.hhs.gov/ocr/breach/breach_frontpage.jsf"
+role = "incident_metadata"
+implementation_status = "planned"
+enabled = false
+
+[[sources]]
+key = "privacy_rights_clearinghouse"
+name = "Privacy Rights Clearinghouse"
+landing_url = "https://privacyrights.org/data-breaches"
+role = "incident_metadata"
+implementation_status = "access_and_redistribution_review_required"
+enabled = false
+
+[[sources]]
+key = "sec_edgar"
+name = "SEC EDGAR"
+landing_url = "https://www.sec.gov/search-filings/edgar-application-programming-interfaces"
+role = "incident_and_financial_disclosure"
+implementation_status = "implemented_configure_ciks_and_sec_user_agent"
+enabled = true
+collector = "sec_edgar"
+ciks = []
+lookback_days = 30
+
+[[sources]]
+key = "state_attorneys_general"
+name = "California Attorney General Data Breach List"
+landing_url = "https://www.oag.ca.gov/privacy/databreach/list"
+role = "incident_metadata_and_notice_documents"
+implementation_status = "implemented"
+enabled = true
+collector = "california_ag_csv"
+data_url = "https://www.oag.ca.gov/privacy/databreach/list-export"
+
+[[sources]]
+key = "vcdb"
+name = "VERIS Community Database"
+landing_url = "https://github.com/vz-risk/VCDB"
+role = "structured_incident_dataset"
+implementation_status = "planned"
+enabled = false
+
+[[sources]]
+key = "ransomware_feeds"
+name = "Permitted Ransomware Feeds"
+landing_url = "https://github.com/joshhighet/ransomwatch"
+role = "ransomware_victim_monitoring"
+implementation_status = "legal_and_source_review_required"
+enabled = false
+
+[[sources]]
+key = "european_dpas"
+name = "European Data Protection Authorities"
+landing_url = "https://www.edpb.europa.eu/our-work-tools/our-documents_en"
+role = "regulatory_fines"
+implementation_status = "planned"
+enabled = false
+
+[[sources]]
+key = "cisa"
+name = "CISA Advisories"
+landing_url = "https://www.cisa.gov/news-events/cybersecurity-advisories"
+role = "threat_context"
+implementation_status = "planned"
+enabled = false
+
+[[sources]]
+key = "wikipedia_breaches"
+name = "Wikipedia List of Data Breaches"
+landing_url = "https://en.wikipedia.org/wiki/List_of_data_breaches"
+role = "discovery_and_cross_check"
+implementation_status = "planned"
+enabled = false
+
+[[sources]]
+key = "firmographic_enrichment"
+name = "SEC and Other Firmographic Enrichment"
+landing_url = "https://www.sec.gov/search-filings/edgar-application-programming-interfaces"
+role = "company_metadata"
+implementation_status = "planned"
+enabled = false

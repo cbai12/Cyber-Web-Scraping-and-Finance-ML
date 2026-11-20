@@ -1,0 +1,31 @@
+source_term,target_category,target_subcategory,mapping_status,notes
+Business Interruption,Business Interruption,,canonical,Target category
+Contingent Business Interruption,Business Interruption,Contingent Business Interruption,canonical,Target subcategory
+Continuing Expenses,Business Interruption,Continuing Expenses,canonical,Target subcategory
+Net Income Loss,Business Interruption,Net Income Loss,canonical,Target subcategory
+Loss Net Income,Business Interruption,Net Income Loss,approved_alias,Existing model wording
+Incident Response,Incident Response,,canonical,Target category
+Crisis Management,Incident Response,Crisis Management,canonical,Target subcategory
+Forensics,Incident Response,Forensics,canonical,Target subcategory
+Forensic investigation costs,Incident Response,Forensics,approved_alias,Common disclosure wording
+Legal,Incident Response,Legal,canonical,Target subcategory
+Notification,Incident Response,Notification,canonical,Target subcategory
+Technical Response,Incident Response,Technical Response,canonical,Target subcategory
+Bricking,Bricking,,canonical,Target category
+Ruined Hardware,Bricking,Ruined Hardware,canonical,Target subcategory
+Privacy Liability,Privacy Liability,,canonical,Target category
+FTC,Privacy Liability,FTC,canonical,Target subcategory
+NYDFS Part 500,Privacy Liability,NYDFS Part 500,canonical,Target subcategory
+OCC,Privacy Liability,OCC,canonical,Target subcategory
+PCI DSS,PCI DSS,PCI DSS-related financial costs,canonical,Target category and subcategory
+PCI DSS-related financial costs,PCI DSS,PCI DSS-related financial costs,canonical,Target subcategory
+Malicious System Failure,Malicious System Failure,,canonical,Target category
+Intentional Crash,Malicious System Failure,Intentional Crash,canonical,Target subcategory
+Malicious Attack,Malicious System Failure,Intentional Crash,needs_review,Too broad to auto-classify without evidence of intentional system failure
+Ransomware,Ransomware,,canonical,Target category
+Digital Extortion,Ransomware,Digital Extortion,canonical,Target subcategory
+Ransom demand,Ransomware,Digital Extortion,needs_review,Demand is not proof of payment or incurred loss
+Ransom payment,Ransomware,Digital Extortion,needs_review,Requires source evidence that payment occurred
+Economic Loss,,,needs_review,Legacy aggregate is broader than the target taxonomy
+Litigation Costs,Incident Response,Legal,needs_review,May be defense cost settlement or damages and requires evidence review
+Regulatory fine,Privacy Liability,,needs_review,Regulator and incident relationship must be verified
