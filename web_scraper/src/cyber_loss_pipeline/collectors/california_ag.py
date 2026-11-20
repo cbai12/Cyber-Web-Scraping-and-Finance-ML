@@ -8,12 +8,19 @@ from urllib.request import Request
 
 from ..models import SourceRecord
 from ..normalization import stable_identifier
-from .base import Collector
+from .base import STAGE_INCIDENT_LIST, Collector, register
 from .http import fetch_bytes
 
 
+@register("california_ag_csv")
 class CaliforniaAGCollector(Collector):
     """Collect incident candidates from the California AG's published CSV."""
+
+    stage = STAGE_INCIDENT_LIST
+
+    @classmethod
+    def from_config(cls, source, context) -> "CaliforniaAGCollector":
+        return cls(source["data_url"], source["landing_url"])
 
     def __init__(self, data_url: str, landing_url: str, timeout: int = 90) -> None:
         self.data_url = data_url

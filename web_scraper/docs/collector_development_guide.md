@@ -22,10 +22,11 @@ web_scraper/src/cyber_loss_pipeline/export.py
         ▼
 web_scraper/data/processed/
    incidents.csv, incident_sources.csv, loss_observations.csv,
-   review_queue.csv, model_input_wide.csv, loss_observations.xlsx
+   review_queue.csv, model_input_wide.csv, company_features.csv,
+   loss_observations.xlsx (one sheet)
 ```
 
-**Important:** A collector does not choose the output folder and normally should not write files directly. The shared pipeline handles persistence and export. The default database and export paths are relative to the directory from which the CLI is run, so run commands from `web_scraper/` to use `web_scraper/data/processed/`.
+**Important:** A collector does not choose the output folder and normally should not write files directly. The shared pipeline handles persistence and export. Default database and export paths are anchored to `web_scraper/`, so the CLI can be run from any directory.
 
 ## 2. Inspect the source before coding
 
@@ -93,16 +94,42 @@ class ExampleCollector(Collector):
 
 Adapt the parsing and mapping to the assigned source; do not copy placeholder values into real records.
 
-## 4. Add the collector to the shared pipeline
+## 4. Register the collector
 
-A complete collector requires integration outside its own module:
+Collectors are registered, so `pipeline.py` and `collectors/__init__.py` do not
+change when a source is added. Every module in `collectors/` is imported
+automatically.
 
-1. **Export the class** from `collectors/__init__.py` and add it to `__all__` if the pipeline imports collectors from that package.
-2. **Add a source entry** to `config/sources.toml` with a unique `key`, `name`, `landing_url`, `enabled`, `collector`, and any source-specific settings needed by the collector.
-3. **Add routing** to `pipeline.py` so that the configured collector key creates the new collector with its settings.
-4. Keep database and file-output logic in the existing shared `Store` and export code unless the team has explicitly agreed to change the pipeline contract.
+1. Decorate the class with `@register("<collector-key>")`.
+2. Set `stage`:
+   - `STAGE_INCIDENT_LIST` (Stage A): finds incidents (who, when, how many records).
+   - `STAGE_ENRICHMENT` (Stage C): looks up more information about companies that
+     are already on the incident list. The pipeline runs these after Stage A and
+     passes the company list in `context.incident_companies`.
+3. Implement `from_config(cls, source, context)`. `source` is the
+   `[[sources]]` block from `config/sources.toml`; `context.environment` holds
+   environment variables. Raise `SkipSource("reason")` when the source is enabled
+   but not configured yet.
+4. Add a `[[sources]]` block to `config/sources.toml` with a unique `key`,
+   `name`, `landing_url`, `enabled`, `collector = "<collector-key>"`, and any
+   source-specific settings.
 
-For example, the routing pattern in `pipeline.py` matches a configured collector name and constructs the appropriate collector. An enabled source with no supported routing is an error, not a successful empty collection.
+```python
+from .base import STAGE_INCIDENT_LIST, Collector, register
+
+
+@register("example_source")
+class ExampleCollector(Collector):
+    stage = STAGE_INCIDENT_LIST
+
+    @classmethod
+    def from_config(cls, source, context):
+        return cls(source["data_url"], source["landing_url"])
+    ...
+```
+
+If a source raises an error while collecting, the run records it under `failed`
+and continues with other sources; records already yielded are kept.
 
 ## 5. Write tests
 
@@ -142,7 +169,7 @@ A source collector is ready to hand off when:
 
 - Its source access method matches the assignment (HTML vs. published CSV/API is explicitly understood).
 - It emits valid, source-backed `SourceRecord` objects with stable IDs.
-- The collector is exported, configured, and routed through the pipeline.
+- The collector is registered with the right `stage` and configured in `sources.toml`.
 - Unit tests cover parsing and failure cases without live network access.
 - A `weekly` run stores records in SQLite and produces the expected exports.
 - The teammate can explain which source fields are captured, which are missing, and why.

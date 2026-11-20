@@ -11,7 +11,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 
 from .taxonomy import Taxonomy
-from .feature_schema import COMPANY_FEATURE_COLUMNS, COMPANY_FEATURE_KEYS, NUMERIC_FEATURE_KEYS
+from .feature_schema import COMPANY_FEATURE_COLUMNS, COMPANY_FEATURE_KEYS
 
 LOSS_OBSERVATION_COLUMNS = (
     "Observation ID",
@@ -82,6 +82,7 @@ def export_all(
     exported.append(
         _export_loss_observations_xlsx(connection, output / "loss_observations.xlsx")
     )
+    exported.append(_export_company_features_csv(connection, output / "company_features.csv"))
     taxonomy = Taxonomy.from_csv(taxonomy_path)
     exported.append(_export_model_wide(connection, output / "model_input_wide.csv", taxonomy))
     connection.close()
@@ -146,16 +147,18 @@ def _export_loss_observations_xlsx(connection: sqlite3.Connection, path: Path) -
             ]
         )
     _style_worksheet(worksheet)
+    workbook.save(path)
+    return path
 
-    features = workbook.create_sheet("Company Features")
-    features.append(
-        (
-            "Company",
-            *(label for label, _ in COMPANY_FEATURE_COLUMNS),
-            "Source URL",
-            "As Of Date",
-            "Retrieved At",
-        )
+
+def _export_company_features_csv(connection: sqlite3.Connection, path: Path) -> Path:
+    """One row per company: the latest feature snapshot (X variables)."""
+    headers = (
+        "Company",
+        *(label for label, _ in COMPANY_FEATURE_COLUMNS),
+        "Source URL",
+        "As Of Date",
+        "Retrieved At",
     )
     feature_rows = connection.execute(
         """
@@ -174,34 +177,32 @@ def _export_loss_observations_xlsx(connection: sqlite3.Connection, path: Path) -
         ORDER BY company_name
         """
     ).fetchall()
-    for row in feature_rows:
-        values = json.loads(row["features_json"])
-        for key in (
-            "company_cik",
-            "ticker",
-            "industry",
-            "industry_code",
-            "revenue",
-            "revenue_currency",
-            "revenue_period",
-            "employees",
-        ):
-            if values.get(key) in (None, ""):
-                values[key] = row[key]
-        features.append(
-            [
-                row["company_name"],
-                *[
-                    _excel_feature_value(key, values.get(key))
-                    for key in COMPANY_FEATURE_KEYS
-                ],
-                row["source_url"],
-                row["as_of_date"],
-                row["retrieved_at"],
-            ]
-        )
-    _style_worksheet(features)
-    workbook.save(path)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(headers)
+        for row in feature_rows:
+            values = json.loads(row["features_json"])
+            for key in (
+                "company_cik",
+                "ticker",
+                "industry",
+                "industry_code",
+                "revenue",
+                "revenue_currency",
+                "revenue_period",
+                "employees",
+            ):
+                if values.get(key) in (None, ""):
+                    values[key] = row[key]
+            writer.writerow(
+                [
+                    row["company_name"],
+                    *[_csv_feature_value(values.get(key)) for key in COMPANY_FEATURE_KEYS],
+                    row["source_url"],
+                    row["as_of_date"],
+                    row["retrieved_at"],
+                ]
+            )
     return path
 
 
@@ -215,18 +216,6 @@ def _style_worksheet(worksheet) -> None:
 
 def _yes_no(value: int | bool | None) -> str:
     return "Yes" if value else "No"
-
-
-def _excel_feature_value(key: str, value):
-    if value is None or value == "":
-        return None
-    if isinstance(value, bool):
-        return _yes_no(value)
-    if key in NUMERIC_FEATURE_KEYS:
-        return Decimal(str(value))
-    if isinstance(value, (list, dict)):
-        return json.dumps(value, ensure_ascii=False, sort_keys=True)
-    return value
 
 
 def _csv_feature_value(value):

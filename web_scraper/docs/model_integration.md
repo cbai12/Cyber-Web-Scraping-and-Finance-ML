@@ -37,7 +37,9 @@ Loss observations with evidence
       v
 Research exports
       |
-      +----> loss_observations.xlsx (21-field audit trail + company features)
+      +----> loss_observations.xlsx (one sheet, 21-field audit trail)
+      |
+      +----> company_features.csv (company-level X variables)
       |
       +----> model_input_wide.csv (approved X/Y training candidates)
       |
@@ -60,9 +62,9 @@ Until then, the existing `Data/` files remain unchanged.
 
 ## X/Y data contract
 
-`loss_observations.xlsx` keeps the supplied 21-column audit contract on its
-`Loss Observations` sheet. Company-level X variables live on a separate
-`Company Features` sheet so the evidence table does not gain columns or repeat
+`loss_observations.xlsx` keeps the supplied 21-column audit contract on its only
+sheet, `Loss Observations`. Company-level X variables live in a separate
+`company_features.csv` so the evidence table does not gain columns or repeat
 company metadata inconsistently. It reserves fields from the supplied assessment
 for company/location, multi-year revenue, breach history, exposed data counts,
 regulatory applicability, current coverage, and security controls. The SEC collector

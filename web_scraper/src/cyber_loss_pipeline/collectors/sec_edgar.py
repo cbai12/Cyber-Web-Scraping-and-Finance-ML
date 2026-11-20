@@ -11,7 +11,7 @@ from urllib.request import Request
 
 from ..models import SourceRecord
 from ..normalization import stable_identifier
-from .base import Collector
+from .base import STAGE_INCIDENT_LIST, Collector, SkipSource, register
 from .http import fetch_bytes
 
 _CYBER = re.compile(
@@ -42,8 +42,27 @@ _FORMS = {"8-K", "8-K/A", "10-Q", "10-Q/A", "10-K", "10-K/A"}
 _MAX_RESPONSE_BYTES = 30_000_000
 
 
+@register("sec_edgar")
 class SECCollector(Collector):
     """Collect recent cyber-related filings for explicitly configured SEC CIKs."""
+
+    stage = STAGE_INCIDENT_LIST
+
+    @classmethod
+    def from_config(cls, source, context) -> "SECCollector":
+        ciks = source.get("ciks", [])
+        if not ciks:
+            raise SkipSource("Set one or more issuer CIKs in config/sources.toml.")
+        user_agent = context.environment.get("SEC_USER_AGENT", "")
+        if not user_agent.strip() or "@" not in user_agent:
+            raise SkipSource(
+                "Set SEC_USER_AGENT to a descriptive name and contact email."
+            )
+        return cls(
+            ciks,
+            user_agent,
+            lookback_days=int(source.get("lookback_days", 30)),
+        )
 
     def __init__(
         self,

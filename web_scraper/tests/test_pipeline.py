@@ -86,7 +86,7 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(worksheet.max_column, 21)
         self.assertEqual(worksheet["H2"].value, "Unallocated Cyber Loss")
         self.assertEqual(worksheet["P2"].value, "No")
-        self.assertEqual(workbook.sheetnames, ["Loss Observations", "Company Features"])
+        self.assertEqual(workbook.sheetnames, ["Loss Observations"])
 
     def test_latest_cumulative_disclosure_is_current_even_when_imported_first(self):
         records = []
@@ -162,18 +162,15 @@ class PipelineTests(unittest.TestCase):
 
         workbook = load_workbook(output / "loss_observations.xlsx", data_only=True)
         observations = workbook["Loss Observations"]
-        features = workbook["Company Features"]
+        self.assertEqual(workbook.sheetnames, ["Loss Observations"])
         self.assertIsNone(observations["J2"].value)
-        feature_headers = [cell.value for cell in features[1]]
-        self.assertEqual(features.cell(2, feature_headers.index("Industry") + 1).value, "Software")
-        self.assertEqual(
-            features.cell(2, feature_headers.index("Revenue (Latest FY)") + 1).value,
-            1500000000,
-        )
-        self.assertEqual(
-            features.cell(2, feature_headers.index("MFA Required For") + 1).value,
-            "All users",
-        )
+        with (output / "company_features.csv").open(newline="", encoding="utf-8") as handle:
+            features = list(csv.DictReader(handle))
+        self.assertEqual(len(features), 1)
+        self.assertEqual(features[0]["Industry"], "Software")
+        self.assertEqual(features[0]["Revenue (Latest FY)"], "1500000000")
+        self.assertEqual(features[0]["MFA Required For"], "All users")
+        self.assertEqual(features[0]["Breached in Past 6 Months"], "")
         with (output / "model_input_wide.csv").open(newline="", encoding="utf-8") as handle:
             rows = list(csv.DictReader(handle))
         self.assertEqual(len(rows), 1)

@@ -116,6 +116,17 @@ CREATE TABLE IF NOT EXISTS review_queue (
     created_at TEXT NOT NULL,
     UNIQUE(observation_id, reason)
 );
+
+CREATE TABLE IF NOT EXISTS review_decisions (
+    decision_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    observation_id TEXT NOT NULL REFERENCES loss_observations(observation_id),
+    decision TEXT NOT NULL,
+    category TEXT,
+    subcategory TEXT,
+    reviewer TEXT,
+    note TEXT,
+    decided_at TEXT NOT NULL
+);
 """
 
 
@@ -182,6 +193,32 @@ class Store:
                     row["incident_id"],
                 ),
             )
+
+    def list_incident_companies(self) -> list[dict[str, object]]:
+        """Companies on the incident list (Stage A output), one row per company.
+
+        Stage C (enrichment) collectors use this so they only look up companies
+        that actually had an incident.
+        """
+        rows = self.connection.execute(
+            """
+            SELECT i.company_key,
+                   MIN(i.company_name) AS company_name,
+                   COUNT(*) AS incident_count,
+                   MIN(i.incident_date) AS first_incident_date,
+                   MAX(i.incident_date) AS last_incident_date,
+                   (
+                       SELECT f.company_cik
+                       FROM company_features f
+                       WHERE f.company_key = i.company_key AND f.company_cik IS NOT NULL
+                       LIMIT 1
+                   ) AS company_cik
+            FROM incidents i
+            GROUP BY i.company_key
+            ORDER BY company_name
+            """
+        ).fetchall()
+        return [dict(row) for row in rows]
 
     def upsert(self, record: SourceRecord, taxonomy: Taxonomy) -> str:
         observed_at = utc_now()
